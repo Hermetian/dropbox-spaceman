@@ -1,1 +1,9 @@
-precompile_assets: true  # precompile assets
+defaults:
+  copy_exclude:
+  - .git
+  precompile_assets: false
+
+environments:
+  production:
+  copy_exclude:
+  - .git
