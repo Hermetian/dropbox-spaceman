@@ -37,6 +37,8 @@ gem 'omniauth'
 gem 'unicorn', '4.7.0'
 
 gem 'pg'
+gem 'dropbox-sdk'
+gem 'sinatra'
 
 # Use ActiveModel has_secure_password
 # gem 'bcrypt-ruby', '~> 3.1.2'
