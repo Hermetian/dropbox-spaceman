@@ -1,3 +1,12 @@
 <div class="yelping-wobster">
 	<h1>Hello Wobster</h1>
 	<h3>and hello cats</h3>
+
+<%= form_tag({:action => :upload}, :multipart => true) do %>
+	<%= file_field_tag 'file' %>
+	<%= submit_tag 'Upload' %>
+<% end %>
+
+<%= form_tag({:action => :signin}) do %>
+	<%= submit_tag 'Dink goes the Wobster' %>
+<% end %>

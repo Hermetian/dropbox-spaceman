@@ -1,6 +1,16 @@
 Derpbox::Application.routes.draw do
   get "index/index"
   root 'index#index'
+  get  "dropbox/main"
+  post "dropbox/upload"
+  get  "dropbox/auth_start"
+  get  "dropbox/auth_finish"
+
+  post "index/upload"
+  post "index/signin"
+  get  "index/auth_start"
+  get  "index/auth_finish"
+
   # The priority is based upon order of creation: first created -> highest priority.
   # See how all your routes lay out with "rake routes".
 

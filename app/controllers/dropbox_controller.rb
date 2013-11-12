@@ -1,12 +1,39 @@
-#Shamelessly modified from Dropbox-provided source code. 
+# ---------------------------------------------------------------------------------------
+# A Rails 3 controller that:
+# - Runs the through Dropbox's OAuth 2 flow, yielding a Dropbox API access token.
+# - Makes a Dropbox API call to upload a file.
+#
+# To run:
+# 1. You need a Rails 3 project (to create one, run: rails new <folder-name>)
+# 2. Copy this file into <folder-name>/app/controllers/
+# 3. Add the following lines to <folder-name>/config/routes.rb
+#        get  "dropbox/main"
+#        post "dropbox/upload"
+#        get  "dropbox/auth_start"
+#        get  "dropbox/auth_finish"
+# 4. Run: rails server
+# 5. Point your browser at: https://localhost:3000/dropbox/main
 
-require 'dropbox_sdk'
+require '../lib/dropbox_sdk'
 require 'securerandom'
 
 APP_KEY = 'fwskw6xoeq4v6yb'
 APP_SECRET = '7uvw5uqnbheowe6'
 
-class IndexController < ApplicationController
+class DropboxController < ApplicationController
+
+    def main
+        client = get_dropbox_client
+        unless client
+            redirect_to(:action => 'auth_start') and return
+        end
+
+        account_info = client.account_info
+
+        # Show a file upload page
+        render :inline =>
+            "#{account_info['email']} <br/><%= form_tag({:action => :upload}, :multipart => true) do %><%= file_field_tag 'file' %><%= submit_tag 'Upload' %><% end %>"
+    end
 
     def upload
         client = get_dropbox_client
@@ -26,17 +53,6 @@ class IndexController < ApplicationController
             logger.info "Dropbox API error: #{e}"
             render :text => "Dropbox API error"
         end
-    end
-
-    def signin
-        client = get_dropbox_client
-        unless client
-            redirect_to(:action => 'auth_start') and return
-        end
-
-        render :text => client.account_info().inspect
-
-        return
     end
 
     def get_dropbox_client
@@ -69,7 +85,7 @@ class IndexController < ApplicationController
         begin
             access_token, user_id, url_state = get_web_auth.finish(params)
             session[:access_token] = access_token
-            redirect_to :action => 'index'
+            redirect_to :action => 'main'
         rescue DropboxOAuth2Flow::BadRequestError => e
             render :text => "Error in OAuth 2 flow: Bad request: #{e}"
         rescue DropboxOAuth2Flow::BadStateError => e
