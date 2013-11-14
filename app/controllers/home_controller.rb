@@ -6,27 +6,16 @@ require 'securerandom'
 APP_KEY = 'fwskw6xoeq4v6yb'
 APP_SECRET = '7uvw5uqnbheowe6'
 
-class IndexController < ApplicationController
+class HomeController < ApplicationController
 
-    def upload
-        client = get_dropbox_client
-        unless client
-            redirect_to(:action => 'auth_start') and return
-        end
-
-        begin
-            # Upload the POST'd file to Dropbox, keeping the same name
-            resp = client.put_file(params[:file].original_filename, params[:file].read)
-            render :text => "Upload successful.  File now at #{resp['path']}"
-        rescue DropboxAuthError => e
-            session.delete(:access_token)  # An auth error means the access token is probably bad
-            logger.info "Dropbox auth error: #{e}"
-            render :text => "Dropbox auth error"
-        rescue DropboxError => e
-            logger.info "Dropbox API error: #{e}"
-            render :text => "Dropbox API error"
-        end
-    end
+#	def initialize
+#		seek = User.find(:first, params[:uid])
+#		if seek
+#			@user = seek
+#		else
+#			@user = User.new(params)			
+#		end
+#	end
 
     def signin
         client = get_dropbox_client
@@ -34,9 +23,27 @@ class IndexController < ApplicationController
             redirect_to(:action => 'auth_start') and return
         end
 
-        render :text => client.account_info().inspect
+		render :text => client.account_info().inspect
+		user_info = client.account_info()
+		uid = user_info["uid"]
 
-        return
+        
+        if User.exists?(uid: uid)
+        	me = User.find_by(uid: uid)
+        	me.update(client)
+        else
+        	me = User.create(uid: uid, total_space: user_info["quota_info"]["quota"], shared_used: user_info["quota_info"]["shared"], normal_used: user_info["quota_info"]["normal"])
+        	me.recurse_metadata(client, '/')
+        end
+
+
+        metadata = client.metadata('/')["contents"]
+
+        #for metadata["contents"].each do |element|
+	    #    if element["is_dir"]
+	    #    end
+	    #end
+        render :text => client.metadata('/')
     end
 
     def get_dropbox_client
@@ -88,4 +95,24 @@ class IndexController < ApplicationController
             render :text => "Error communicating with Dropbox servers."
         end
     end
+
+    def upload
+        client = get_dropbox_client
+        unless client
+            redirect_to(:action => 'auth_start') and return
+        end
+
+        begin
+            # Upload the POST'd file to Dropbox, keeping the same name
+            resp = client.put_file(params[:file].original_filename, params[:file].read)
+            render :text => "Upload successful.  File now at #{resp['path']}"
+        rescue DropboxAuthError => e
+            session.delete(:access_token)  # An auth error means the access token is probably bad
+            logger.info "Dropbox auth error: #{e}"
+            render :text => "Dropbox auth error"
+        rescue DropboxError => e
+            logger.info "Dropbox API error: #{e}"
+            render :text => "Dropbox API error"
+        end
+    end    
 end
